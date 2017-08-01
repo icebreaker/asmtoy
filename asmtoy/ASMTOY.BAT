@@ -1,0 +1,7 @@
+@echo off
+
+CWSDPMI\CWSDPMI.EXE -p -s-
+mount X: SOURCE
+X:
+cd FLPYBIRD
+C:\FASM\ASMTOY.EXE FLPYBIRD.ASM

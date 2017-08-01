@@ -1,0 +1,329 @@
+<!doctype html>
+<html lang="en-us">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <title>docs/index</title>
+    <style type="text/css">
+      body
+	  {
+		font-family: arial;
+		padding: 0;
+		width: 640px;
+		margin: 0 auto;
+      }
+
+	  .warning
+	  {
+		  color: #b90000;
+		  font-weight: bold;
+		  margin-top: 10px;
+		  margin-bottom: 10px;
+	  }
+
+	  #fullscreen
+	  {
+		  display: none;
+	  }
+
+      #output
+	  {
+        width: 100%;
+        height: 200px;
+        margin-top: 10px;
+        border-left: 0px;
+        border-right: 0px;
+        padding-left: 0px;
+        padding-right: 0px;
+        display: block;
+        background-color: black;
+        color: white;
+        font-family: 'Lucida Console', Monaco, monospace;
+        outline: none;
+      }
+    </style>
+  </head>
+  <body>
+	<a href="http://github.com/icebreaker/asmtoy">
+		<img style="position: fixed; top: 0; right: 0; border: 0; z-index: 1000;" src="/images/ribbon.png" alt="Fork me on GitHub">
+	</a>
+	<h1>ASMToy v1.0.0</h1>
+	<h2 id="loading">Loading ...</h2>
+	<canvas id="canvas" oncontextmenu="event.preventDefault()"></canvas>
+	<input id="fullscreen" type="button" value="Fullscreen" onclick="Module.requestFullscreen(true, false);">
+	<textarea id="output" rows="8" readonly></textarea>
+	<div class="warning">WARNING: There is no persistence layer, all changes will be discarded on reload.</div>
+	<h2>Technology</h2>
+	<ul>
+		<li><a href="https://github.com/dreamlayers/em-dosbox">DOSBox (ported via emscripten)</a></li>
+		<li><a href="https://flatassembler.net/">Flat Assembler IDE for DOS (slightly modified and rebranded)</a></li>
+		<li><a href="https://en.wikipedia.org/wiki/CWSDPMI">CWSDPMI</a></li>
+	</ul>
+	<h2>TODO</h2>
+	<ul>
+		<li>add a simple persistance layer on the top of local storage</li>
+		<li>add a simple way to save/load to/from GitHub gists (sharing)</li>
+	</ul>
+	<script type='text/javascript'>
+		var fullscreen = document.getElementById('fullscreen');
+		var loading = document.getElementById('loading');
+		var output = document.getElementById('output');
+		var canvas = document.getElementById('canvas');
+
+		var Module =
+		{
+			preRun: [],
+			postRun: [function()
+			{
+				fullscreen.style.display = "block";
+				loading.style.display = "none";
+			}],
+			print: function(text)
+			{
+				if (arguments.length > 1) text = Array.prototype.slice.call(arguments).join(' ');
+				console.log(text);
+				output.value += text + "\n";
+				output.scrollTop = output.scrollHeight;
+			},
+			printErr: function(text)
+			{
+				if (arguments.length > 1) text = Array.prototype.slice.call(arguments).join(' ');
+				console.error(text);
+			},
+			canvas: canvas
+		};
+	</script>
+<script type="text/javascript">
+var Module;
+
+if (typeof Module === 'undefined') Module = eval('(function() { try { return Module || {} } catch(e) { return {} } })()');
+
+if (!Module.expectedDataFileDownloads) {
+  Module.expectedDataFileDownloads = 0;
+  Module.finishedDataFileDownloads = 0;
+}
+Module.expectedDataFileDownloads++;
+(function() {
+ var loadPackage = function(metadata) {
+
+    var PACKAGE_PATH;
+    if (typeof window === 'object') {
+      PACKAGE_PATH = window['encodeURIComponent'](window.location.pathname.toString().substring(0, window.location.pathname.toString().lastIndexOf('/')) + '/');
+    } else if (typeof location !== 'undefined') {
+      // worker
+      PACKAGE_PATH = encodeURIComponent(location.pathname.toString().substring(0, location.pathname.toString().lastIndexOf('/')) + '/');
+    } else {
+      throw 'using preloaded data can only be done on a web page or in a web worker';
+    }
+    var PACKAGE_NAME = '/home/msz/asmtoy/docs/index.data';
+    var REMOTE_PACKAGE_BASE = 'index.data';
+    if (typeof Module['locateFilePackage'] === 'function' && !Module['locateFile']) {
+      Module['locateFile'] = Module['locateFilePackage'];
+      Module.printErr('warning: you defined Module.locateFilePackage, that has been renamed to Module.locateFile (using your locateFilePackage for now)');
+    }
+    var REMOTE_PACKAGE_NAME = typeof Module['locateFile'] === 'function' ?
+                              Module['locateFile'](REMOTE_PACKAGE_BASE) :
+                              ((Module['filePackagePrefixURL'] || '') + REMOTE_PACKAGE_BASE);
+  
+    var REMOTE_PACKAGE_SIZE = metadata.remote_package_size;
+    var PACKAGE_UUID = metadata.package_uuid;
+  
+    function fetchRemotePackage(packageName, packageSize, callback, errback) {
+      var xhr = new XMLHttpRequest();
+      xhr.open('GET', packageName, true);
+      xhr.responseType = 'arraybuffer';
+      xhr.onprogress = function(event) {
+        var url = packageName;
+        var size = packageSize;
+        if (event.total) size = event.total;
+        if (event.loaded) {
+          if (!xhr.addedTotal) {
+            xhr.addedTotal = true;
+            if (!Module.dataFileDownloads) Module.dataFileDownloads = {};
+            Module.dataFileDownloads[url] = {
+              loaded: event.loaded,
+              total: size
+            };
+          } else {
+            Module.dataFileDownloads[url].loaded = event.loaded;
+          }
+          var total = 0;
+          var loaded = 0;
+          var num = 0;
+          for (var download in Module.dataFileDownloads) {
+          var data = Module.dataFileDownloads[download];
+            total += data.total;
+            loaded += data.loaded;
+            num++;
+          }
+          total = Math.ceil(total * Module.expectedDataFileDownloads/num);
+          if (Module['setStatus']) Module['setStatus']('Downloading data... (' + loaded + '/' + total + ')');
+        } else if (!Module.dataFileDownloads) {
+          if (Module['setStatus']) Module['setStatus']('Downloading data...');
+        }
+      };
+      xhr.onerror = function(event) {
+        throw new Error("NetworkError for: " + packageName);
+      }
+      xhr.onload = function(event) {
+        if (xhr.status == 200 || xhr.status == 304 || xhr.status == 206 || (xhr.status == 0 && xhr.response)) { // file URLs can return 0
+          var packageData = xhr.response;
+          callback(packageData);
+        } else {
+          throw new Error(xhr.statusText + " : " + xhr.responseURL);
+        }
+      };
+      xhr.send(null);
+    };
+
+    function handleError(error) {
+      console.error('package error:', error);
+    };
+  
+      var fetchedCallback = null;
+      var fetched = Module['getPreloadedPackage'] ? Module['getPreloadedPackage'](REMOTE_PACKAGE_NAME, REMOTE_PACKAGE_SIZE) : null;
+
+      if (!fetched) fetchRemotePackage(REMOTE_PACKAGE_NAME, REMOTE_PACKAGE_SIZE, function(data) {
+        if (fetchedCallback) {
+          fetchedCallback(data);
+          fetchedCallback = null;
+        } else {
+          fetched = data;
+        }
+      }, handleError);
+    
+  function runWithFS() {
+
+    function assert(check, msg) {
+      if (!check) throw msg + new Error().stack;
+    }
+Module['FS_createPath']('/', 'FASM', true, true);
+Module['FS_createPath']('/FASM', 'EXAMPLES', true, true);
+Module['FS_createPath']('/FASM/EXAMPLES', 'DEVICE', true, true);
+Module['FS_createPath']('/FASM/EXAMPLES', 'LIFE', true, true);
+Module['FS_createPath']('/FASM/EXAMPLES', 'COMDEMO', true, true);
+Module['FS_createPath']('/FASM/EXAMPLES', 'EXEDEMO', true, true);
+Module['FS_createPath']('/FASM/EXAMPLES', 'USEDPMI', true, true);
+Module['FS_createPath']('/FASM/EXAMPLES', 'MANDEL', true, true);
+Module['FS_createPath']('/FASM/EXAMPLES', 'MULTISEG', true, true);
+Module['FS_createPath']('/FASM', 'SOURCE', true, true);
+Module['FS_createPath']('/FASM/SOURCE', 'LIBC', true, true);
+Module['FS_createPath']('/FASM/SOURCE', 'LINUX', true, true);
+Module['FS_createPath']('/FASM/SOURCE/LINUX', 'X64', true, true);
+Module['FS_createPath']('/FASM/SOURCE', 'DOS', true, true);
+Module['FS_createPath']('/FASM/SOURCE', 'WIN32', true, true);
+Module['FS_createPath']('/FASM/SOURCE', 'IDE', true, true);
+Module['FS_createPath']('/FASM/SOURCE/IDE', 'FASMD', true, true);
+Module['FS_createPath']('/FASM', 'TOOLS', true, true);
+Module['FS_createPath']('/FASM/TOOLS', 'LIBC', true, true);
+Module['FS_createPath']('/FASM/TOOLS', 'DOS', true, true);
+Module['FS_createPath']('/FASM/TOOLS', 'WIN32', true, true);
+Module['FS_createPath']('/', 'SOURCE', true, true);
+Module['FS_createPath']('/SOURCE', 'FLPYBIRD', true, true);
+Module['FS_createPath']('/SOURCE/FLPYBIRD', 'SYS', true, true);
+Module['FS_createPath']('/SOURCE/FLPYBIRD', 'GAME', true, true);
+Module['FS_createPath']('/SOURCE/FLPYBIRD', 'DATA', true, true);
+Module['FS_createPath']('/SOURCE', 'SAMPLES', true, true);
+Module['FS_createPath']('/', 'CWSDPMI', true, true);
+
+    function DataRequest(start, end, crunched, audio) {
+      this.start = start;
+      this.end = end;
+      this.crunched = crunched;
+      this.audio = audio;
+    }
+    DataRequest.prototype = {
+      requests: {},
+      open: function(mode, name) {
+        this.name = name;
+        this.requests[name] = this;
+        Module['addRunDependency']('fp ' + this.name);
+      },
+      send: function() {},
+      onload: function() {
+        var byteArray = this.byteArray.subarray(this.start, this.end);
+
+          this.finish(byteArray);
+
+      },
+      finish: function(byteArray) {
+        var that = this;
+
+        Module['FS_createDataFile'](this.name, null, byteArray, true, true, true); // canOwn this data in the filesystem, it is a slide into the heap that will never change
+        Module['removeRunDependency']('fp ' + that.name);
+
+        this.requests[this.name] = null;
+      }
+    };
+
+        var files = metadata.files;
+        for (var i = 0; i < files.length; ++i) {
+          new DataRequest(files[i].start, files[i].end, files[i].crunched, files[i].audio).open('GET', files[i].filename);
+        }
+
+  
+    function processPackageData(arrayBuffer) {
+      Module.finishedDataFileDownloads++;
+      assert(arrayBuffer, 'Loading data file failed.');
+      assert(arrayBuffer instanceof ArrayBuffer, 'bad input to processPackageData');
+      var byteArray = new Uint8Array(arrayBuffer);
+      var curr;
+      
+        // Reuse the bytearray from the XHR as the source for file reads.
+        DataRequest.prototype.byteArray = byteArray;
+  
+          var files = metadata.files;
+          for (var i = 0; i < files.length; ++i) {
+            DataRequest.prototype.requests[files[i].filename].onload();
+          }
+              Module['removeRunDependency']('datafile_/home/msz/asmtoy/docs/index.data');
+
+    };
+    Module['addRunDependency']('datafile_/home/msz/asmtoy/docs/index.data');
+  
+    if (!Module.preloadResults) Module.preloadResults = {};
+  
+      Module.preloadResults[PACKAGE_NAME] = {fromCache: false};
+      if (fetched) {
+        processPackageData(fetched);
+        fetched = null;
+      } else {
+        fetchedCallback = processPackageData;
+      }
+    
+  }
+  if (Module['calledRun']) {
+    runWithFS();
+  } else {
+    if (!Module['preRun']) Module['preRun'] = [];
+    Module["preRun"].push(runWithFS); // FS is not initialized yet, wait for it
+  }
+
+ }
+ loadPackage({"files": [{"audio": 0, "start": 0, "crunched": 0, "end": 101, "filename": "/ASMTOY.BAT"}, {"audio": 0, "start": 101, "crunched": 0, "end": 2599, "filename": "/mapper.map"}, {"audio": 0, "start": 2599, "crunched": 0, "end": 2647, "filename": "/dosbox.conf"}, {"audio": 0, "start": 2647, "crunched": 0, "end": 3186, "filename": "/FASM/ASMTOY.INI"}, {"audio": 0, "start": 3186, "crunched": 0, "end": 135031, "filename": "/FASM/FASMD.EXE"}, {"audio": 0, "start": 135031, "crunched": 0, "end": 136851, "filename": "/FASM/LICENSE.TXT"}, {"audio": 0, "start": 136851, "crunched": 0, "end": 243023, "filename": "/FASM/FASM.EXE"}, {"audio": 0, "start": 243023, "crunched": 0, "end": 517047, "filename": "/FASM/FASM.TXT"}, {"audio": 0, "start": 517047, "crunched": 0, "end": 649020, "filename": "/FASM/ASMTOY.EXE"}, {"audio": 0, "start": 649020, "crunched": 0, "end": 649048, "filename": "/FASM/TEST"}, {"audio": 0, "start": 649048, "crunched": 0, "end": 670588, "filename": "/FASM/WHATSNEW.TXT"}, {"audio": 0, "start": 670588, "crunched": 0, "end": 679475, "filename": "/FASM/FASMD.TXT"}, {"audio": 0, "start": 679475, "crunched": 0, "end": 679563, "filename": "/FASM/FASMD.INI"}, {"audio": 0, "start": 679563, "crunched": 0, "end": 679651, "filename": "/FASM/EXAMPLES/DEVICE/DEVICE.SYS"}, {"audio": 0, "start": 679651, "crunched": 0, "end": 680545, "filename": "/FASM/EXAMPLES/DEVICE/DEVICE.ASM"}, {"audio": 0, "start": 680545, "crunched": 0, "end": 683651, "filename": "/FASM/EXAMPLES/LIFE/LIFE.ASM"}, {"audio": 0, "start": 683651, "crunched": 0, "end": 684085, "filename": "/FASM/EXAMPLES/LIFE/LIFE.COM"}, {"audio": 0, "start": 684085, "crunched": 0, "end": 684318, "filename": "/FASM/EXAMPLES/COMDEMO/COMDEMO.ASM"}, {"audio": 0, "start": 684318, "crunched": 0, "end": 684340, "filename": "/FASM/EXAMPLES/COMDEMO/COMDEMO.COM"}, {"audio": 0, "start": 684340, "crunched": 0, "end": 684399, "filename": "/FASM/EXAMPLES/EXEDEMO/EXEDEMO.EXE"}, {"audio": 0, "start": 684399, "crunched": 0, "end": 684577, "filename": "/FASM/EXAMPLES/EXEDEMO/EXEDEMO.ASM"}, {"audio": 0, "start": 684577, "crunched": 0, "end": 686113, "filename": "/FASM/EXAMPLES/USEDPMI/USEDPMI.ASM"}, {"audio": 0, "start": 686113, "crunched": 0, "end": 686374, "filename": "/FASM/EXAMPLES/USEDPMI/USEDPMI.EXE"}, {"audio": 0, "start": 686374, "crunched": 0, "end": 686557, "filename": "/FASM/EXAMPLES/MANDEL/MANDEL.COM"}, {"audio": 0, "start": 686557, "crunched": 0, "end": 687586, "filename": "/FASM/EXAMPLES/MANDEL/MANDEL.ASM"}, {"audio": 0, "start": 687586, "crunched": 0, "end": 687985, "filename": "/FASM/EXAMPLES/MULTISEG/MULTISEG.ASM"}, {"audio": 0, "start": 687985, "crunched": 0, "end": 688086, "filename": "/FASM/EXAMPLES/MULTISEG/MULTISEG.EXE"}, {"audio": 0, "start": 688086, "crunched": 0, "end": 697755, "filename": "/FASM/SOURCE/SYMBDUMP.INC"}, {"audio": 0, "start": 697755, "crunched": 0, "end": 844319, "filename": "/FASM/SOURCE/X86_64.INC"}, {"audio": 0, "start": 844319, "crunched": 0, "end": 846842, "filename": "/FASM/SOURCE/MESSAGES.INC"}, {"audio": 0, "start": 846842, "crunched": 0, "end": 888703, "filename": "/FASM/SOURCE/EXPRCALC.INC"}, {"audio": 0, "start": 888703, "crunched": 0, "end": 1024845, "filename": "/FASM/SOURCE/TABLES.INC"}, {"audio": 0, "start": 1024845, "crunched": 0, "end": 1048036, "filename": "/FASM/SOURCE/EXPRPARS.INC"}, {"audio": 0, "start": 1048036, "crunched": 0, "end": 1050990, "filename": "/FASM/SOURCE/VARIABLE.INC"}, {"audio": 0, "start": 1050990, "crunched": 0, "end": 1079571, "filename": "/FASM/SOURCE/PARSER.INC"}, {"audio": 0, "start": 1079571, "crunched": 0, "end": 1163877, "filename": "/FASM/SOURCE/FORMATS.INC"}, {"audio": 0, "start": 1163877, "crunched": 0, "end": 1236934, "filename": "/FASM/SOURCE/AVX.INC"}, {"audio": 0, "start": 1236934, "crunched": 0, "end": 1238781, "filename": "/FASM/SOURCE/VERSION.INC"}, {"audio": 0, "start": 1238781, "crunched": 0, "end": 1279089, "filename": "/FASM/SOURCE/ASSEMBLE.INC"}, {"audio": 0, "start": 1279089, "crunched": 0, "end": 1336008, "filename": "/FASM/SOURCE/PREPROCE.INC"}, {"audio": 0, "start": 1336008, "crunched": 0, "end": 1340610, "filename": "/FASM/SOURCE/ERRORS.INC"}, {"audio": 0, "start": 1340610, "crunched": 0, "end": 1347491, "filename": "/FASM/SOURCE/LIBC/FASM.ASM"}, {"audio": 0, "start": 1347491, "crunched": 0, "end": 1354509, "filename": "/FASM/SOURCE/LIBC/SYSTEM.INC"}, {"audio": 0, "start": 1354509, "crunched": 0, "end": 1361046, "filename": "/FASM/SOURCE/LINUX/FASM.ASM"}, {"audio": 0, "start": 1361046, "crunched": 0, "end": 1368990, "filename": "/FASM/SOURCE/LINUX/SYSTEM.INC"}, {"audio": 0, "start": 1368990, "crunched": 0, "end": 1372020, "filename": "/FASM/SOURCE/LINUX/X64/MODES.INC"}, {"audio": 0, "start": 1372020, "crunched": 0, "end": 1379033, "filename": "/FASM/SOURCE/LINUX/X64/FASM.ASM"}, {"audio": 0, "start": 1379033, "crunched": 0, "end": 1387516, "filename": "/FASM/SOURCE/LINUX/X64/SYSTEM.INC"}, {"audio": 0, "start": 1387516, "crunched": 0, "end": 1398474, "filename": "/FASM/SOURCE/DOS/MODES.INC"}, {"audio": 0, "start": 1398474, "crunched": 0, "end": 1406231, "filename": "/FASM/SOURCE/DOS/FASM.ASM"}, {"audio": 0, "start": 1406231, "crunched": 0, "end": 1415694, "filename": "/FASM/SOURCE/DOS/SYSTEM.INC"}, {"audio": 0, "start": 1415694, "crunched": 0, "end": 1417797, "filename": "/FASM/SOURCE/DOS/DPMI.INC"}, {"audio": 0, "start": 1417797, "crunched": 0, "end": 1426438, "filename": "/FASM/SOURCE/WIN32/FASM.ASM"}, {"audio": 0, "start": 1426438, "crunched": 0, "end": 1436270, "filename": "/FASM/SOURCE/WIN32/SYSTEM.INC"}, {"audio": 0, "start": 1436270, "crunched": 0, "end": 1437059, "filename": "/FASM/SOURCE/IDE/VARIABLE.INC"}, {"audio": 0, "start": 1437059, "crunched": 0, "end": 1441279, "filename": "/FASM/SOURCE/IDE/MEMORY.INC"}, {"audio": 0, "start": 1441279, "crunched": 0, "end": 1447332, "filename": "/FASM/SOURCE/IDE/UNDO.INC"}, {"audio": 0, "start": 1447332, "crunched": 0, "end": 1458015, "filename": "/FASM/SOURCE/IDE/NAVIGATE.INC"}, {"audio": 0, "start": 1458015, "crunched": 0, "end": 1468885, "filename": "/FASM/SOURCE/IDE/BLOCKS.INC"}, {"audio": 0, "start": 1468885, "crunched": 0, "end": 1470744, "filename": "/FASM/SOURCE/IDE/VERSION.INC"}, {"audio": 0, "start": 1470744, "crunched": 0, "end": 1482682, "filename": "/FASM/SOURCE/IDE/SEARCH.INC"}, {"audio": 0, "start": 1482682, "crunched": 0, "end": 1502767, "filename": "/FASM/SOURCE/IDE/EDIT.INC"}, {"audio": 0, "start": 1502767, "crunched": 0, "end": 1633579, "filename": "/FASM/SOURCE/IDE/FASMD/FASMD.ASM"}, {"audio": 0, "start": 1633579, "crunched": 0, "end": 1634755, "filename": "/FASM/TOOLS/README.TXT"}, {"audio": 0, "start": 1634755, "crunched": 0, "end": 1647850, "filename": "/FASM/TOOLS/LISTING.INC"}, {"audio": 0, "start": 1647850, "crunched": 0, "end": 1655994, "filename": "/FASM/TOOLS/SYMBOLS.INC"}, {"audio": 0, "start": 1655994, "crunched": 0, "end": 1657976, "filename": "/FASM/TOOLS/PREPSRC.INC"}, {"audio": 0, "start": 1657976, "crunched": 0, "end": 1659475, "filename": "/FASM/TOOLS/LIBC/PREPSRC.ASM"}, {"audio": 0, "start": 1659475, "crunched": 0, "end": 1659816, "filename": "/FASM/TOOLS/LIBC/CCALL.INC"}, {"audio": 0, "start": 1659816, "crunched": 0, "end": 1661431, "filename": "/FASM/TOOLS/LIBC/SYSTEM.INC"}, {"audio": 0, "start": 1661431, "crunched": 0, "end": 1664598, "filename": "/FASM/TOOLS/LIBC/LISTING.ASM"}, {"audio": 0, "start": 1664598, "crunched": 0, "end": 1666133, "filename": "/FASM/TOOLS/LIBC/SYMBOLS.ASM"}, {"audio": 0, "start": 1666133, "crunched": 0, "end": 1668018, "filename": "/FASM/TOOLS/DOS/LOADER.INC"}, {"audio": 0, "start": 1668018, "crunched": 0, "end": 1670084, "filename": "/FASM/TOOLS/DOS/PREPSRC.ASM"}, {"audio": 0, "start": 1670084, "crunched": 0, "end": 1673512, "filename": "/FASM/TOOLS/DOS/SYSTEM.INC"}, {"audio": 0, "start": 1673512, "crunched": 0, "end": 1677354, "filename": "/FASM/TOOLS/DOS/LISTING.ASM"}, {"audio": 0, "start": 1677354, "crunched": 0, "end": 1679456, "filename": "/FASM/TOOLS/DOS/SYMBOLS.ASM"}, {"audio": 0, "start": 1679456, "crunched": 0, "end": 1681712, "filename": "/FASM/TOOLS/WIN32/PREPSRC.ASM"}, {"audio": 0, "start": 1681712, "crunched": 0, "end": 1682788, "filename": "/FASM/TOOLS/WIN32/SYSTEM.INC"}, {"audio": 0, "start": 1682788, "crunched": 0, "end": 1686795, "filename": "/FASM/TOOLS/WIN32/LISTING.ASM"}, {"audio": 0, "start": 1686795, "crunched": 0, "end": 1689087, "filename": "/FASM/TOOLS/WIN32/SYMBOLS.ASM"}, {"audio": 0, "start": 1689087, "crunched": 0, "end": 1691039, "filename": "/SOURCE/FLPYBIRD/FLPYBIRD.ASM"}, {"audio": 0, "start": 1691039, "crunched": 0, "end": 1691073, "filename": "/SOURCE/FLPYBIRD/.project"}, {"audio": 0, "start": 1691073, "crunched": 0, "end": 1723841, "filename": "/SOURCE/FLPYBIRD/FLPYBIRD.COM"}, {"audio": 0, "start": 1723841, "crunched": 0, "end": 1724919, "filename": "/SOURCE/FLPYBIRD/LICENSE"}, {"audio": 0, "start": 1724919, "crunched": 0, "end": 1725330, "filename": "/SOURCE/FLPYBIRD/SYS/SND.ASM"}, {"audio": 0, "start": 1725330, "crunched": 0, "end": 1733837, "filename": "/SOURCE/FLPYBIRD/SYS/VGA.ASM"}, {"audio": 0, "start": 1733837, "crunched": 0, "end": 1734739, "filename": "/SOURCE/FLPYBIRD/SYS/TMR.ASM"}, {"audio": 0, "start": 1734739, "crunched": 0, "end": 1736834, "filename": "/SOURCE/FLPYBIRD/SYS/TXT.ASM"}, {"audio": 0, "start": 1736834, "crunched": 0, "end": 1737561, "filename": "/SOURCE/FLPYBIRD/SYS/RND.ASM"}, {"audio": 0, "start": 1737561, "crunched": 0, "end": 1739017, "filename": "/SOURCE/FLPYBIRD/GAME/BIRD.ASM"}, {"audio": 0, "start": 1739017, "crunched": 0, "end": 1739609, "filename": "/SOURCE/FLPYBIRD/GAME/DATA.ASM"}, {"audio": 0, "start": 1739609, "crunched": 0, "end": 1739927, "filename": "/SOURCE/FLPYBIRD/GAME/BUSHES.ASM"}, {"audio": 0, "start": 1739927, "crunched": 0, "end": 1740934, "filename": "/SOURCE/FLPYBIRD/GAME/SCORE.ASM"}, {"audio": 0, "start": 1740934, "crunched": 0, "end": 1741310, "filename": "/SOURCE/FLPYBIRD/GAME/BACKGRND.ASM"}, {"audio": 0, "start": 1741310, "crunched": 0, "end": 1741611, "filename": "/SOURCE/FLPYBIRD/GAME/FLATS.ASM"}, {"audio": 0, "start": 1741611, "crunched": 0, "end": 1741916, "filename": "/SOURCE/FLPYBIRD/GAME/CLOUDS.ASM"}, {"audio": 0, "start": 1741916, "crunched": 0, "end": 1742698, "filename": "/SOURCE/FLPYBIRD/GAME/GROUND.ASM"}, {"audio": 0, "start": 1742698, "crunched": 0, "end": 1746135, "filename": "/SOURCE/FLPYBIRD/GAME/PIPES.ASM"}, {"audio": 0, "start": 1746135, "crunched": 0, "end": 1747239, "filename": "/SOURCE/FLPYBIRD/DATA/GRASS.TGA"}, {"audio": 0, "start": 1747239, "crunched": 0, "end": 1750311, "filename": "/SOURCE/FLPYBIRD/DATA/FLATS.TGA"}, {"audio": 0, "start": 1750311, "crunched": 0, "end": 1753687, "filename": "/SOURCE/FLPYBIRD/DATA/BIRD.TGA"}, {"audio": 0, "start": 1753687, "crunched": 0, "end": 1755399, "filename": "/SOURCE/FLPYBIRD/DATA/CLOUD.TGA"}, {"audio": 0, "start": 1755399, "crunched": 0, "end": 1756535, "filename": "/SOURCE/FLPYBIRD/DATA/PIPE.TGA"}, {"audio": 0, "start": 1756535, "crunched": 0, "end": 1758247, "filename": "/SOURCE/FLPYBIRD/DATA/FONT.TGA"}, {"audio": 0, "start": 1758247, "crunched": 0, "end": 1759463, "filename": "/SOURCE/FLPYBIRD/DATA/PIPE_TOP.TGA"}, {"audio": 0, "start": 1759463, "crunched": 0, "end": 1761175, "filename": "/SOURCE/FLPYBIRD/DATA/BUSH.TGA"}, {"audio": 0, "start": 1761175, "crunched": 0, "end": 1762359, "filename": "/SOURCE/SAMPLES/COLORS.ASM"}, {"audio": 0, "start": 1762359, "crunched": 0, "end": 1762491, "filename": "/SOURCE/SAMPLES/HELLO.ASM"}, {"audio": 0, "start": 1762491, "crunched": 0, "end": 1768735, "filename": "/CWSDPMI/cwsparam.doc"}, {"audio": 0, "start": 1768735, "crunched": 0, "end": 1778358, "filename": "/CWSDPMI/cwsdpmi.doc"}, {"audio": 0, "start": 1778358, "crunched": 0, "end": 1800374, "filename": "/CWSDPMI/CWSDSTR0.EXE"}, {"audio": 0, "start": 1800374, "crunched": 0, "end": 1821699, "filename": "/CWSDPMI/CWSDPMI.EXE"}, {"audio": 0, "start": 1821699, "crunched": 0, "end": 1844227, "filename": "/CWSDPMI/CWSDSTUB.EXE"}, {"audio": 0, "start": 1844227, "crunched": 0, "end": 1864746, "filename": "/CWSDPMI/CWSDPR0.EXE"}, {"audio": 0, "start": 1864746, "crunched": 0, "end": 1877870, "filename": "/CWSDPMI/CWSPARAM.EXE"}], "remote_package_size": 1877870, "package_uuid": "9bab37ee-1147-4247-9c62-ed405293b76d"});
+
+})();
+
+Module['arguments'] = [ './ASMTOY.BAT' ];
+</script>
+	<script type="text/javascript">
+		(function()
+		{
+			var memoryInitializer = 'dosbox.html.mem';
+			if(typeof Module['locateFile'] === 'function')
+				memoryInitializer = Module['locateFile'](memoryInitializer);
+			else if(Module['memoryInitializerPrefixURL'])
+				memoryInitializer = Module['memoryInitializerPrefixURL'] + memoryInitializer;
+	
+			var meminitXHR = Module['memoryInitializerRequest'] = new XMLHttpRequest();
+			meminitXHR.open('GET', memoryInitializer, true);
+			meminitXHR.responseType = 'arraybuffer';
+			meminitXHR.send(null);
+		})();
+
+		var script = document.createElement('script');
+		script.src = "dosbox.js";
+		document.body.appendChild(script);
+	</script>
+  </body>
+</html>
