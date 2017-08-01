@@ -400,7 +400,7 @@ segment main use32
 	cmp	ah,1
 	; je close_editor
 	jb	character
-	cmp	al,0Eh
+	cmp	ah,31h
 	je	new_editor
 	cmp	ah,94h
 	je	switch_editor
@@ -6268,10 +6268,10 @@ segment main use32
 	mov	esi,_help_text
 	mov	ebx,_help_title
 	movzx	eax,[message_box_colors]
-	add [_message_box_height], 2 ; terrible hack no. 1
+	add [_message_box_height], 4 ; terrible hack no. 1
 	call	message_box
 	mov	esp,stack_top
-	sub [_message_box_height], 2 ; terrible hack no. 2
+	sub [_message_box_height], 4 ; terrible hack no. 2
 	jmp	main_loop
 
 ; Error handling
@@ -6582,7 +6582,8 @@ segment main use32
   _help_text db 'F2 - Save',0Ah, \
 				'F4 - Open',0Ah, \
 				'F9 - Run',0Ah, \
-				'Alt + X - Close / Abort', \
+				'Alt + N - New',0Ah, \
+				'Alt + X - Close', \
 				0
 
 ; Configuration
