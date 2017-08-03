@@ -7,10 +7,18 @@
 ; Floppy Bird is provided **as-is** under the **MIT** license.
 ; For more information see LICENSE.
 ;
-; Help:
+; How to play?
 ;
-; Space - to start and flap
-; Q - to quit
+; Press <F9> to compile and run then <Space> to start and flap
+; and <Q> to quit.
+;
+; Other useful editor keys:
+;
+; F4 - open
+; F2 - save
+; F9 - run (and compile)
+; Alt + N - new
+; Alt + X - close (or abort current operation)
 ;
 org 100h
 IMAGE_SIZE equ 32 * 1024
